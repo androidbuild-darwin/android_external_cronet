@@ -460,6 +460,7 @@ class Module(object):
 
     def __init__(self, name):
       self.name = name
+      self.enabled = None
       self.srcs = set()
       self.shared_libs = set()
       self.static_libs = set()
@@ -479,6 +480,7 @@ class Module(object):
 
     def to_string(self, output):
       nested_out = []
+      self._output_field(nested_out, 'enabled')
       self._output_field(nested_out, 'srcs')
       self._output_field(nested_out, 'shared_libs')
       self._output_field(nested_out, 'static_libs')
@@ -1876,6 +1878,9 @@ def create_blueprint_for_targets(gn, targets, test_targets):
       # base, so it is removed unconditionally for host targets.
       '-UANDROID',
   ]
+  # Host descriptions use Linux sources and flags, not a Darwin toolchain.
+  defaults.target['darwin'] = Module.Target('darwin')
+  defaults.target['darwin'].enabled = False
   defaults.stl = 'none'
   defaults.cpp_std = 'c++17'
   defaults.min_sdk_version = 29

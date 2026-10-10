@@ -18612,6 +18612,9 @@ cc_defaults {
                 "jni_headers",
             ],
         },
+        darwin: {
+            enabled: false,
+        },
         host: {
             cflags: [
                 "-UANDROID",
