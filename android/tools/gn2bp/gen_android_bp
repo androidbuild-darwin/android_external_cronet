@@ -1916,6 +1916,25 @@ def create_blueprint_for_targets(gn, targets, test_targets):
       else:
         raise Exception('Unimplemented type %r of additional_args: %r' % (type(add_val), key))
 
+  # protoc is needed by Android genrules even when Cronet host libraries are
+  # disabled. Build the bundled protobuf sources with the platform STL on Darwin.
+  protoc = blueprint.modules[get_protoc_module_name(gn)]
+  linux = Module.Target('linux_glibc')
+  for field in ('srcs', 'cflags', 'local_include_dirs', 'whole_static_libs', 'ldflags'):
+    setattr(linux, field, getattr(protoc, field))
+    setattr(protoc, field, set())
+  protoc.target['linux_glibc'] = linux
+  darwin = Module.Target('darwin')
+  darwin.enabled = True
+  darwin.stl = 'libc++_static'
+  darwin.local_include_dirs = {'third_party/protobuf/src'}
+  darwin.cflags = {'-DHAVE_PTHREAD'}
+  darwin.srcs.update(linux.srcs)
+  for library in ('protobuf_full', 'protobuf_lite', 'protoc_lib'):
+    darwin.srcs.update(blueprint.modules[
+        label_to_module_name('//third_party/protobuf:' + library)].srcs)
+  protoc.target['darwin'] = darwin
+
   return blueprint
 
 def create_package_module(blueprint):
